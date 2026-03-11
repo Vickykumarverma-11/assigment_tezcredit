@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assigment_tezcredit/core/constants/app_constants.dart';
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
 import 'package:assigment_tezcredit/core/security/screenshot_prevention_service.dart';
 import 'package:assigment_tezcredit/core/security/session_manager.dart';
+import 'package:assigment_tezcredit/core/utils/app_bloc_observer.dart';
 import 'package:assigment_tezcredit/data/models/applicant_model.dart';
 import 'package:assigment_tezcredit/presentation/screens/applicant_details_screen.dart';
 import 'package:assigment_tezcredit/presentation/screens/biometric_auth_screen.dart';
@@ -17,16 +19,14 @@ import 'package:assigment_tezcredit/presentation/screens/selfie_capture_screen.d
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Lock orientation to portrait
+  Bloc.observer = AppBlocObserver();
+
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Initialize all dependencies (security services init before any screen)
   await initDependencies();
-
-  // Initialize screenshot prevention
   await sl<ScreenshotPreventionService>().init();
 
   runApp(const TezCreditApp());

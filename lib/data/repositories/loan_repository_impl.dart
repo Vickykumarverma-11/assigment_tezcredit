@@ -71,6 +71,7 @@ class LoanRepositoryImpl implements LoanRepository {
           isApproved: isApproved,
           eligibleAmount: eligibleAmount,
           estimatedEmi: isApproved ? emi : 0.0,
+          tenureMonths: policy.tenureMonths,
           rejectionReasons: rejectionReasons,
         ),
       );

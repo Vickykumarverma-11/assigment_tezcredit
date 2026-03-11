@@ -1,15 +1,14 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assigment_tezcredit/core/constants/app_constants.dart';
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
-import 'package:assigment_tezcredit/core/security/screenshot_prevention_service.dart';
 import 'package:assigment_tezcredit/core/security/session_manager.dart';
 import 'package:assigment_tezcredit/core/utils/validators.dart';
 import 'package:assigment_tezcredit/presentation/bloc/applicant_bloc.dart';
+import 'package:assigment_tezcredit/presentation/mixins/screenshot_prevention_mixin.dart';
+import 'package:assigment_tezcredit/presentation/widgets/blur_overlay.dart';
 
 class ApplicantDetailsScreen extends StatefulWidget {
   const ApplicantDetailsScreen({super.key});
@@ -19,7 +18,7 @@ class ApplicantDetailsScreen extends StatefulWidget {
 }
 
 class _ApplicantDetailsScreenState extends State<ApplicantDetailsScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ScreenshotPreventionMixin {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _panController = TextEditingController();
@@ -28,7 +27,6 @@ class _ApplicantDetailsScreenState extends State<ApplicantDetailsScreen>
 
   String _employmentType = AppConstants.employmentTypes.first;
   int _creditHistory = 1;
-  bool _showBlurOverlay = false;
 
   late final ApplicantBloc _applicantBloc;
   late final SessionManager _sessionManager;
@@ -58,18 +56,12 @@ class _ApplicantDetailsScreenState extends State<ApplicantDetailsScreen>
       curve: Curves.easeOutCubic,
     ));
     _animController.forward();
-
-    sl<ScreenshotPreventionService>().lifecycleStream.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _showBlurOverlay = state == AppLifecycleState.inactive ||
-            state == AppLifecycleState.paused;
-      });
-    });
+    initScreenshotPrevention();
   }
 
   @override
   void dispose() {
+    disposeScreenshotPrevention();
     _nameController.dispose();
     _panController.dispose();
     _incomeController.dispose();
@@ -199,7 +191,7 @@ class _ApplicantDetailsScreenState extends State<ApplicantDetailsScreen>
               ),
             ),
           ),
-          if (_showBlurOverlay) _buildBlurOverlay(),
+          if (showBlurOverlay) const BlurOverlay(),
         ],
       ),
     );
@@ -663,17 +655,4 @@ class _ApplicantDetailsScreenState extends State<ApplicantDetailsScreen>
     );
   }
 
-  Widget _buildBlurOverlay() {
-    return Positioned.fill(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          color: Colors.white.withValues(alpha: 0.8),
-          child: const Center(
-            child: Icon(Icons.lock, size: 64, color: Colors.grey),
-          ),
-        ),
-      ),
-    );
-  }
 }

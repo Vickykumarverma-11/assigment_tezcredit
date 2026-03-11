@@ -1,6 +1,7 @@
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 
@@ -87,6 +88,6 @@ class SslPinningInterceptor {
 
 extension on X509Certificate {
   List<int> get sha256Fingerprint {
-    return der.toList();
+    return sha256.convert(der).bytes;
   }
 }

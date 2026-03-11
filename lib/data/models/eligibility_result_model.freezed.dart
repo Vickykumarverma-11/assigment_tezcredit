@@ -29,6 +29,8 @@ mixin _$EligibilityResultModel {
   double get eligibleAmount => throw _privateConstructorUsedError;
   @JsonKey(name: 'estimated_emi')
   double get estimatedEmi => throw _privateConstructorUsedError;
+  @JsonKey(name: 'tenure_months')
+  int get tenureMonths => throw _privateConstructorUsedError;
   @JsonKey(name: 'rejection_reasons')
   List<String> get rejectionReasons => throw _privateConstructorUsedError;
 
@@ -53,6 +55,7 @@ abstract class $EligibilityResultModelCopyWith<$Res> {
     @JsonKey(name: 'is_approved') bool isApproved,
     @JsonKey(name: 'eligible_amount') double eligibleAmount,
     @JsonKey(name: 'estimated_emi') double estimatedEmi,
+    @JsonKey(name: 'tenure_months') int tenureMonths,
     @JsonKey(name: 'rejection_reasons') List<String> rejectionReasons,
   });
 }
@@ -78,6 +81,7 @@ class _$EligibilityResultModelCopyWithImpl<
     Object? isApproved = null,
     Object? eligibleAmount = null,
     Object? estimatedEmi = null,
+    Object? tenureMonths = null,
     Object? rejectionReasons = null,
   }) {
     return _then(
@@ -94,6 +98,10 @@ class _$EligibilityResultModelCopyWithImpl<
                 ? _value.estimatedEmi
                 : estimatedEmi // ignore: cast_nullable_to_non_nullable
                       as double,
+            tenureMonths: null == tenureMonths
+                ? _value.tenureMonths
+                : tenureMonths // ignore: cast_nullable_to_non_nullable
+                      as int,
             rejectionReasons: null == rejectionReasons
                 ? _value.rejectionReasons
                 : rejectionReasons // ignore: cast_nullable_to_non_nullable
@@ -117,6 +125,7 @@ abstract class _$$EligibilityResultModelImplCopyWith<$Res>
     @JsonKey(name: 'is_approved') bool isApproved,
     @JsonKey(name: 'eligible_amount') double eligibleAmount,
     @JsonKey(name: 'estimated_emi') double estimatedEmi,
+    @JsonKey(name: 'tenure_months') int tenureMonths,
     @JsonKey(name: 'rejection_reasons') List<String> rejectionReasons,
   });
 }
@@ -139,6 +148,7 @@ class __$$EligibilityResultModelImplCopyWithImpl<$Res>
     Object? isApproved = null,
     Object? eligibleAmount = null,
     Object? estimatedEmi = null,
+    Object? tenureMonths = null,
     Object? rejectionReasons = null,
   }) {
     return _then(
@@ -155,6 +165,10 @@ class __$$EligibilityResultModelImplCopyWithImpl<$Res>
             ? _value.estimatedEmi
             : estimatedEmi // ignore: cast_nullable_to_non_nullable
                   as double,
+        tenureMonths: null == tenureMonths
+            ? _value.tenureMonths
+            : tenureMonths // ignore: cast_nullable_to_non_nullable
+                  as int,
         rejectionReasons: null == rejectionReasons
             ? _value._rejectionReasons
             : rejectionReasons // ignore: cast_nullable_to_non_nullable
@@ -171,6 +185,7 @@ class _$EligibilityResultModelImpl implements _EligibilityResultModel {
     @JsonKey(name: 'is_approved') required this.isApproved,
     @JsonKey(name: 'eligible_amount') required this.eligibleAmount,
     @JsonKey(name: 'estimated_emi') required this.estimatedEmi,
+    @JsonKey(name: 'tenure_months') this.tenureMonths = 0,
     @JsonKey(name: 'rejection_reasons')
     final List<String> rejectionReasons = const [],
   }) : _rejectionReasons = rejectionReasons;
@@ -187,6 +202,9 @@ class _$EligibilityResultModelImpl implements _EligibilityResultModel {
   @override
   @JsonKey(name: 'estimated_emi')
   final double estimatedEmi;
+  @override
+  @JsonKey(name: 'tenure_months')
+  final int tenureMonths;
   final List<String> _rejectionReasons;
   @override
   @JsonKey(name: 'rejection_reasons')
@@ -199,7 +217,7 @@ class _$EligibilityResultModelImpl implements _EligibilityResultModel {
 
   @override
   String toString() {
-    return 'EligibilityResultModel(isApproved: $isApproved, eligibleAmount: $eligibleAmount, estimatedEmi: $estimatedEmi, rejectionReasons: $rejectionReasons)';
+    return 'EligibilityResultModel(isApproved: $isApproved, eligibleAmount: $eligibleAmount, estimatedEmi: $estimatedEmi, tenureMonths: $tenureMonths, rejectionReasons: $rejectionReasons)';
   }
 
   @override
@@ -213,6 +231,8 @@ class _$EligibilityResultModelImpl implements _EligibilityResultModel {
                 other.eligibleAmount == eligibleAmount) &&
             (identical(other.estimatedEmi, estimatedEmi) ||
                 other.estimatedEmi == estimatedEmi) &&
+            (identical(other.tenureMonths, tenureMonths) ||
+                other.tenureMonths == tenureMonths) &&
             const DeepCollectionEquality().equals(
               other._rejectionReasons,
               _rejectionReasons,
@@ -226,6 +246,7 @@ class _$EligibilityResultModelImpl implements _EligibilityResultModel {
     isApproved,
     eligibleAmount,
     estimatedEmi,
+    tenureMonths,
     const DeepCollectionEquality().hash(_rejectionReasons),
   );
 
@@ -252,6 +273,7 @@ abstract class _EligibilityResultModel implements EligibilityResultModel {
     @JsonKey(name: 'is_approved') required final bool isApproved,
     @JsonKey(name: 'eligible_amount') required final double eligibleAmount,
     @JsonKey(name: 'estimated_emi') required final double estimatedEmi,
+    @JsonKey(name: 'tenure_months') final int tenureMonths,
     @JsonKey(name: 'rejection_reasons') final List<String> rejectionReasons,
   }) = _$EligibilityResultModelImpl;
 
@@ -267,6 +289,9 @@ abstract class _EligibilityResultModel implements EligibilityResultModel {
   @override
   @JsonKey(name: 'estimated_emi')
   double get estimatedEmi;
+  @override
+  @JsonKey(name: 'tenure_months')
+  int get tenureMonths;
   @override
   @JsonKey(name: 'rejection_reasons')
   List<String> get rejectionReasons;

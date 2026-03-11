@@ -9,6 +9,7 @@ class EligibilityResultModel with _$EligibilityResultModel {
     @JsonKey(name: 'is_approved') required bool isApproved,
     @JsonKey(name: 'eligible_amount') required double eligibleAmount,
     @JsonKey(name: 'estimated_emi') required double estimatedEmi,
+    @JsonKey(name: 'tenure_months') @Default(0) int tenureMonths,
     @JsonKey(name: 'rejection_reasons') @Default([]) List<String> rejectionReasons,
   }) = _EligibilityResultModel;
 

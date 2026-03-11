@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assigment_tezcredit/core/constants/app_constants.dart';
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
-import 'package:assigment_tezcredit/core/security/screenshot_prevention_service.dart';
 import 'package:assigment_tezcredit/core/security/session_manager.dart';
+import 'package:assigment_tezcredit/presentation/mixins/screenshot_prevention_mixin.dart';
+import 'package:assigment_tezcredit/presentation/widgets/blur_overlay.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -16,11 +16,11 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen>
+    with ScreenshotPreventionMixin {
   final PageController _carouselController = PageController();
   int _currentPage = 0;
   Timer? _autoScrollTimer;
-  bool _showBlurOverlay = false;
 
   final List<_CarouselItem> _carouselItems = const [
     _CarouselItem(
@@ -47,14 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _startAutoScroll();
-
-    sl<ScreenshotPreventionService>().lifecycleStream.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _showBlurOverlay = state == AppLifecycleState.inactive ||
-            state == AppLifecycleState.paused;
-      });
-    });
+    initScreenshotPrevention();
   }
 
   void _startAutoScroll() {
@@ -71,6 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+    disposeScreenshotPrevention();
     _autoScrollTimer?.cancel();
     _carouselController.dispose();
     super.dispose();
@@ -106,7 +100,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
-        if (_showBlurOverlay) _buildBlurOverlay(),
+        if (showBlurOverlay) const BlurOverlay(),
       ],
     );
   }
@@ -527,19 +521,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBlurOverlay() {
-    return Positioned.fill(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          color: Colors.white.withValues(alpha: 0.8),
-          child: const Center(
-            child: Icon(Icons.lock, size: 64, color: Colors.grey),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _CarouselItem {

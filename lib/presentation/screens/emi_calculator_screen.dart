@@ -1,12 +1,12 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
-import 'package:assigment_tezcredit/core/security/screenshot_prevention_service.dart';
 import 'package:assigment_tezcredit/core/security/session_manager.dart';
+import 'package:assigment_tezcredit/core/utils/currency_formatter.dart';
 import 'package:assigment_tezcredit/presentation/bloc/emi_bloc.dart';
+import 'package:assigment_tezcredit/presentation/mixins/screenshot_prevention_mixin.dart';
+import 'package:assigment_tezcredit/presentation/widgets/blur_overlay.dart';
 
 class EmiCalculatorScreen extends StatefulWidget {
   const EmiCalculatorScreen({super.key});
@@ -15,9 +15,9 @@ class EmiCalculatorScreen extends StatefulWidget {
   State<EmiCalculatorScreen> createState() => _EmiCalculatorScreenState();
 }
 
-class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
+class _EmiCalculatorScreenState extends State<EmiCalculatorScreen>
+    with ScreenshotPreventionMixin {
   late final EmiBloc _emiBloc;
-  bool _showBlurOverlay = false;
 
   double _loanAmount = 500000;
   double _interestRate = 10.0;
@@ -35,18 +35,12 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
     super.initState();
     _emiBloc = sl<EmiBloc>();
     _calculateEmi();
-
-    sl<ScreenshotPreventionService>().lifecycleStream.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _showBlurOverlay = state == AppLifecycleState.inactive ||
-            state == AppLifecycleState.paused;
-      });
-    });
+    initScreenshotPrevention();
   }
 
   @override
   void dispose() {
+    disposeScreenshotPrevention();
     _emiBloc.close();
     super.dispose();
   }
@@ -60,32 +54,10 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
     ));
   }
 
-  String _formatCurrency(double value) {
-    if (value >= 10000000) {
-      return '${(value / 10000000).toStringAsFixed(2)} Cr';
-    } else if (value >= 100000) {
-      return '${(value / 100000).toStringAsFixed(2)} L';
-    } else if (value >= 1000) {
-      return '${(value / 1000).toStringAsFixed(1)} K';
-    }
-    return value.toStringAsFixed(0);
-  }
+  String _formatCurrency(double value) => CurrencyFormatter.formatShort(value);
 
-  String _formatFullCurrency(double value) {
-    final intVal = value.round();
-    final str = intVal.toString();
-    if (str.length <= 3) return '\u20B9$str';
-
-    final lastThree = str.substring(str.length - 3);
-    String remaining = str.substring(0, str.length - 3);
-    final buffer = StringBuffer();
-    while (remaining.length > 2) {
-      buffer.write('${remaining.substring(0, remaining.length - 2)},');
-      remaining = remaining.substring(remaining.length - 2);
-    }
-    buffer.write(remaining);
-    return '\u20B9${buffer.toString()},$lastThree';
-  }
+  String _formatFullCurrency(double value) =>
+      CurrencyFormatter.formatIndian(value);
 
   @override
   Widget build(BuildContext context) {
@@ -121,7 +93,7 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
               ),
             ),
           ),
-          if (_showBlurOverlay) _buildBlurOverlay(),
+          if (showBlurOverlay) const BlurOverlay(),
         ],
       ),
     );
@@ -473,17 +445,4 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
     );
   }
 
-  Widget _buildBlurOverlay() {
-    return Positioned.fill(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          color: Colors.white.withValues(alpha: 0.8),
-          child: const Center(
-            child: Icon(Icons.lock, size: 64, color: Colors.grey),
-          ),
-        ),
-      ),
-    );
-  }
 }

@@ -1,13 +1,13 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:assigment_tezcredit/core/constants/app_constants.dart';
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
-import 'package:assigment_tezcredit/core/security/screenshot_prevention_service.dart';
+import 'package:assigment_tezcredit/core/security/session_manager.dart';
 import 'package:assigment_tezcredit/presentation/bloc/security_bloc.dart';
+import 'package:assigment_tezcredit/presentation/mixins/screenshot_prevention_mixin.dart';
+import 'package:assigment_tezcredit/presentation/widgets/blur_overlay.dart';
 
 class BiometricAuthScreen extends StatefulWidget {
   const BiometricAuthScreen({super.key});
@@ -16,28 +16,21 @@ class BiometricAuthScreen extends StatefulWidget {
   State<BiometricAuthScreen> createState() => _BiometricAuthScreenState();
 }
 
-class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
+class _BiometricAuthScreenState extends State<BiometricAuthScreen>
+    with ScreenshotPreventionMixin {
   late final SecurityBloc _securityBloc;
-  bool _showBlurOverlay = false;
 
   @override
   void initState() {
     super.initState();
     _securityBloc = sl<SecurityBloc>();
     _securityBloc.add(const AppLaunched());
-
-    // iOS blur overlay for screenshot prevention
-    sl<ScreenshotPreventionService>().lifecycleStream.listen((state) {
-      if (!mounted) return;
-      setState(() {
-        _showBlurOverlay = state == AppLifecycleState.inactive ||
-            state == AppLifecycleState.paused;
-      });
-    });
+    initScreenshotPrevention();
   }
 
   @override
   void dispose() {
+    disposeScreenshotPrevention();
     _securityBloc.close();
     super.dispose();
   }
@@ -101,6 +94,7 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
                           ),
                           const SizedBox(height: 48),
                           _buildStateContent(context, state),
+                          _buildSkipButton(context),
                         ],
                       ),
                     ),
@@ -109,7 +103,7 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
               ),
             ),
           ),
-          if (_showBlurOverlay) _buildBlurOverlay(),
+          if (showBlurOverlay) const BlurOverlay(),
         ],
       ),
     );
@@ -196,6 +190,23 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
     return const SizedBox.shrink();
   }
 
+  // TODO: Remove before production
+  Widget _buildSkipButton(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 32),
+      child: TextButton(
+        onPressed: () {
+          sl<SessionManager>().startSession();
+          context.go(AppConstants.homeRoute);
+        },
+        child: Text(
+          'Skip for now (Debug)',
+          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
+        ),
+      ),
+    );
+  }
+
   void _showDeviceCompromisedDialog(BuildContext context, String reason) {
     showDialog(
       context: context,
@@ -226,21 +237,4 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen> {
     );
   }
 
-  Widget _buildBlurOverlay() {
-    return Positioned.fill(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          color: Colors.white.withValues(alpha: 0.8),
-          child: const Center(
-            child: Icon(
-              Icons.lock,
-              size: 64,
-              color: Colors.grey,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
