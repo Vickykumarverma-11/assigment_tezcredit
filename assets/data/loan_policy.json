@@ -1,0 +1,32 @@
+[
+  {
+    "min_income": 25000,
+    "max_loan_amount": 200000,
+    "tenure_months": 24,
+    "credit_history_required": 1
+  },
+  {
+    "min_income": 35000,
+    "max_loan_amount": 500000,
+    "tenure_months": 36,
+    "credit_history_required": 1
+  },
+  {
+    "min_income": 50000,
+    "max_loan_amount": 1000000,
+    "tenure_months": 48,
+    "credit_history_required": 1
+  },
+  {
+    "min_income": 75000,
+    "max_loan_amount": 2000000,
+    "tenure_months": 60,
+    "credit_history_required": 1
+  },
+  {
+    "min_income": 100000,
+    "max_loan_amount": 5000000,
+    "tenure_months": 84,
+    "credit_history_required": 1
+  }
+]
