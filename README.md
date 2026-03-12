@@ -1,146 +1,152 @@
-# TezCredit - Loan Onboarding App
+# TezCredit
 
-A Flutter loan onboarding application built with Clean Architecture, featuring comprehensive security measures, multi-tier eligibility evaluation, and an EMI calculator.
+Loan onboarding app built with Flutter. Handles the full flow — biometric login, KYC form, selfie capture, loan eligibility check, and an EMI calculator. Uses clean architecture throughout.
 
-## Architecture
-
-Clean Architecture with three layers:
-
-- **Presentation** - Screens, Widgets, BLoCs (Flutter Bloc), Mixins
-- **Domain** - Abstract repositories, Use cases
-- **Data** - Models (Freezed), Data sources, Repository implementations
-
-## Tech Stack
-
-| Category | Package |
-|---|---|
-| State Management | flutter_bloc, equatable |
-| Networking | dio (with native SSL pinning) |
-| Navigation | go_router (with session guard) |
-| DI | get_it |
-| Models | freezed, json_serializable |
-| Error Handling | dartz (Either<Failure, T>) |
-| Camera | camera |
-| Storage | shared_preferences, flutter_secure_storage |
-| Security | local_auth, encrypt, device_info_plus, crypto |
-| Testing | bloc_test, mocktail |
-
-## Security Features
-
-1. **Biometric Authentication** - Fingerprint/Face ID with device PIN fallback, 3-attempt lockout for 30 seconds
-2. **Root/Jailbreak Detection** - Pure dart:io file path checks (no third-party package)
-3. **Screenshot Prevention** - Android: FLAG_SECURE via platform channel; iOS: blur overlay on inactive (via mixin)
-4. **Data Encryption** - AES-256 CBC with random IV per encryption (encrypt package)
-5. **Secure Storage** - Encryption keys and tokens in flutter_secure_storage
-6. **Session Management** - 5-minute inactivity timeout with automatic redirect to biometric auth
-7. **Input Sanitization** - HTML/script stripping, pattern enforcement on all fields
-8. **Certificate Pinning** - Dio native HttpClient with SHA-256 fingerprint validation (no plugin)
-9. **Device Fingerprinting** - SHA-256 hash of device attributes, verified on each launch
-10. **Obfuscation Ready** - Build commands documented below
-
-## Screens
-
-| Route | Screen | Description |
-|---|---|---|
-| `/` | BiometricAuthScreen | Biometric authentication gate |
-| `/home` | HomeScreen | Dashboard with carousel, loan eligibility card, quick actions |
-| `/applicant` | ApplicantDetailsScreen | KYC form with validation and encryption |
-| `/selfie` | SelfieCaptureScreen | Front camera selfie capture |
-| `/result` | EligibilityResultScreen | Loan approval/rejection with detailed breakdown |
-| `/emi-calculator` | EmiCalculatorScreen | Live EMI calculator with sliders |
-
-## Loan Policy Tiers
-
-| Min Income | Max Loan | Tenure |
-|---|---|---|
-| ₹25,000 | ₹2,00,000 | 24 months |
-| ₹35,000 | ₹5,00,000 | 36 months |
-| ₹50,000 | ₹10,00,000 | 48 months |
-| ₹75,000 | ₹20,00,000 | 60 months |
-| ₹1,00,000 | ₹50,00,000 | 84 months |
-
-## Eligibility Rules
-
-1. Monthly income >= policy tier minimum
-2. Credit history required (verified)
-3. Requested loan amount <= policy tier maximum
-4. EMI (amount / tenure) <= 40% of monthly income
-
-## Setup
+## Getting Started
 
 ```bash
-# Install dependencies
 flutter pub get
-
-# Run code generation (required for freezed models)
 dart run build_runner build --delete-conflicting-outputs
-
-# Run the app
 flutter run
 ```
 
-## Testing
+The `build_runner` step is needed because models use `freezed` for code generation. Skip it if the `.freezed.dart` and `.g.dart` files are already there.
+
+## Build
 
 ```bash
-# Run all unit tests
-flutter test
+# debug
+flutter run
 
-# Run with coverage
-flutter test --coverage
-```
+# release apk
+flutter build apk --release
 
-**Test Coverage:**
-- `validators_test.dart` - Input sanitization & validation (25 tests)
-- `emi_calculator_test.dart` - EMI formula accuracy & edge cases (8 tests)
-- `loan_repository_impl_test.dart` - Eligibility rules & policy matching (9 tests)
-- `emi_bloc_test.dart` - EMI bloc state transitions (7 tests)
-- `eligibility_bloc_test.dart` - Eligibility bloc with mocked usecases (7 tests)
-
-## Obfuscation (Production Builds)
-
-```bash
-# Android
+# release with obfuscation (recommended for prod)
 flutter build apk --obfuscate --split-debug-info=build/debug-info
 
-# iOS
+# ios
 flutter build ipa --obfuscate --split-debug-info=build/debug-info
 ```
 
-## Project Structure
+## How It Works
+
+The app follows a step-by-step loan onboarding flow:
+
+**Biometric Auth (`/`)** → User authenticates via fingerprint/faceID/PIN. Device gets checked for root/jailbreak. After 5 failed attempts, locks out for 30 seconds.
+
+**Home (`/home`)** → Dashboard with a scrolling carousel, eligibility card, and shortcut to EMI calculator.
+
+**Applicant Form (`/applicant`)** → User fills in name, PAN, monthly income, loan amount, employment type, and credit history. All sensitive fields (PAN, income, loan amount) are AES-256 encrypted before being passed forward. Inputs are sanitized to prevent injection.
+
+**Selfie Capture (`/selfie`)** → Opens front camera, user takes a selfie inside a circular frame. Can review and retake before confirming.
+
+**Eligibility Result (`/result`)** → Loads loan policies from a local JSON file, matches the applicant's income to the right policy tier, and runs eligibility rules. Shows approved (with loan details) or rejected (with reasons).
+
+**EMI Calculator (`/emi-calculator`)** → Standalone tool with sliders for amount, interest rate, and tenure. Shows monthly EMI, total payment, and total interest in real time.
+
+## Eligibility Rules
+
+The evaluation logic lives in `lib/data/repositories/loan_repository_impl.dart`. Four rules must all pass for approval:
+
+1. **Income check** — `monthly_income >= min_income` (minimum ₹25,000 depending on tier)
+2. **Credit history** — `credit_history == 1` (must have satisfactory credit)
+3. **Loan cap** — `requested_amount <= max_loan_amount` (varies by tier, up to ₹50L)
+4. **EMI affordability** — `emi <= monthly_income * 0.4` where `emi = requested_amount / tenure_months`
+
+If any rule fails, the applicant is rejected with specific reasons. On rejection, the app also calculates the max eligible amount they could qualify for.
+
+### Loan Policy Tiers
+
+Loaded from `assets/data/loan_policy.json`:
+
+| Min Income | Max Loan | Tenure |
+|------------|----------|--------|
+| ₹25,000 | ₹2,00,000 | 24 mo |
+| ₹35,000 | ₹5,00,000 | 36 mo |
+| ₹50,000 | ₹10,00,000 | 48 mo |
+| ₹75,000 | ₹20,00,000 | 60 mo |
+| ₹1,00,000 | ₹50,00,000 | 84 mo |
+
+## Architecture
 
 ```
 lib/
 ├── core/
-│   ├── constants/         # App-wide constants
-│   ├── error/             # Typed Failure classes (Equatable)
-│   ├── utils/             # Validators, EMI calculator, currency formatter, BlocObserver
-│   ├── security/          # Biometric, encryption, root detection, SSL pinning, session, device fingerprint
-│   └── di/                # GetIt dependency injection
+│   ├── constants/         # routes, validation patterns, policy defaults
+│   ├── di/                # GetIt service locator setup
+│   ├── error/             # Failure types (extends Equatable)
+│   ├── security/          # biometric, encryption, root detection, ssl pinning,
+│   │                        session management, screenshot prevention, device fingerprint
+│   └── utils/             # validators, emi calculator, currency formatter
 ├── data/
-│   ├── models/            # Freezed immutable models with JSON serialization
-│   ├── datasources/       # Local data sources (asset JSON)
-│   └── repositories/      # Repository implementations with Either<Failure, T>
+│   ├── models/            # freezed models (ApplicantModel, LoanPolicyModel, EligibilityResultModel)
+│   ├── datasources/       # reads loan_policy.json from assets
+│   └── repositories/      # eligibility evaluation logic
 ├── domain/
-│   ├── repositories/      # Abstract repository interfaces
-│   └── usecases/          # Business logic use cases (callable classes)
+│   ├── repositories/      # abstract interfaces
+│   └── usecases/          # LoadLoanPolicy, EvaluateEligibility
 ├── presentation/
-│   ├── bloc/              # BLoCs for each feature (Security, Applicant, Eligibility, Camera, EMI)
-│   ├── screens/           # App screens (6 screens)
-│   ├── widgets/           # Reusable widgets (BlurOverlay)
+│   ├── bloc/              # SecurityBloc, ApplicantBloc, EligibilityBloc, CameraBloc, EmiBloc
+│   ├── screens/           # 6 screens (biometric, home, applicant, selfie, result, emi)
+│   ├── widgets/           # BlurOverlay (used for screenshot prevention)
 │   └── mixins/            # ScreenshotPreventionMixin
-├── main.dart              # Entry point, GoRouter, theme
-test/
-├── core/utils/            # Validator & EMI calculator tests
-├── data/repositories/     # Repository logic tests with mocks
-└── presentation/bloc/     # BLoC state transition tests
+└── main.dart              # app entry, GoRouter config, theme
 ```
 
-## Design Decisions
+**State management** — `flutter_bloc`. Each bloc is registered as a factory in GetIt so screens get fresh instances.
 
-- **Single model layer** - Freezed models serve as both domain entities and data transfer objects, avoiding unnecessary mapping boilerplate
-- **BLoCs as factories** - Each screen gets a fresh BLoC instance for proper lifecycle management
-- **ScreenshotPreventionMixin** - Extracts lifecycle subscription management to prevent memory leaks across 6 screens
-- **CurrencyFormatter** - Centralized Indian number formatting (₹X,XX,XXX) used by all screens
-- **BlocObserver** - Global logging of all state transitions for debugging
-- **Session guard in GoRouter** - Redirect middleware checks session expiry on every navigation
-- **SSL pinning uses crypto SHA-256** - Actual fingerprint hash comparison, not raw DER bytes
+**Navigation** — `go_router` with a redirect guard that checks session expiry on every route change. Expired session sends user back to biometric auth.
+
+**Error handling** — uses `dartz` Either type. Repository methods return `Either<Failure, T>` so errors are handled explicitly without try-catch at the UI level.
+
+**Models** — `freezed` for immutability + `json_serializable` for JSON parsing. Single model layer (no separate entity classes) to keep things simple.
+
+## Security
+
+This is a fintech app, so security is layered:
+
+- **Biometric auth** — `local_auth` package, supports fingerprint/faceID with device PIN fallback
+- **Root/jailbreak detection** — checks known file paths on Android and iOS using `dart:io` (no third-party dependency)
+- **Device fingerprinting** — SHA-256 hash of device attributes (model, brand, OS version), verified on each launch
+- **Encryption** — AES-256 CBC with random IV for sensitive data. Key generated on first launch, stored in `flutter_secure_storage`
+- **Session timeout** — 5-minute inactivity timeout, configurable in `AppConstants`
+- **Screenshot prevention** — Android uses `FLAG_SECURE` via platform channel. iOS uses a blur overlay when app goes to background
+- **SSL pinning** — custom `HttpClient` on Dio that validates server certificate SHA-256 fingerprint
+- **Input sanitization** — strips HTML tags, script patterns, and dangerous characters from all user inputs
+
+## Tests
+
+```bash
+flutter test
+```
+
+Tests cover:
+- **Validators** — input sanitization, PAN format, name/income/loan validation
+- **EMI Calculator** — formula accuracy, edge cases (zero rate, large amounts)
+- **LoanRepositoryImpl** — all 4 eligibility rules, rejection reasons, max eligible calculation
+- **EmiBloc** — state transitions on input changes
+- **EligibilityBloc** — full flow with mocked usecases, approval and rejection paths
+
+## Dependencies
+
+| What | Package |
+|------|---------|
+| State management | `flutter_bloc`, `equatable` |
+| Routing | `go_router` |
+| DI | `get_it` |
+| Networking | `dio` |
+| Models | `freezed`, `json_serializable` |
+| Error handling | `dartz` |
+| Camera | `camera` |
+| Storage | `shared_preferences`, `flutter_secure_storage` |
+| Auth | `local_auth` |
+| Encryption | `encrypt`, `crypto` |
+| Device info | `device_info_plus` |
+| Testing | `bloc_test`, `mocktail` |
+
+## Notes
+
+- The SSL pinning fingerprint in `AppConstants` is a placeholder (`SHA256_FINGERPRINT_PLACEHOLDER`). Replace it with the actual server cert fingerprint before going to production.
+- There's a debug skip button on the biometric screen for testing — remove it before release.
+- The app is locked to portrait orientation.
+- Currency formatting follows Indian numbering (₹X,XX,XXX).

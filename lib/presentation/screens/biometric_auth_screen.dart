@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import 'package:assigment_tezcredit/core/constants/app_constants.dart';
 import 'package:assigment_tezcredit/core/di/injection_container.dart';
-import 'package:assigment_tezcredit/core/security/session_manager.dart';
 import 'package:assigment_tezcredit/presentation/bloc/security_bloc.dart';
 import 'package:assigment_tezcredit/presentation/mixins/screenshot_prevention_mixin.dart';
 import 'package:assigment_tezcredit/presentation/widgets/blur_overlay.dart';
@@ -94,7 +93,6 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
                           ),
                           const SizedBox(height: 48),
                           _buildStateContent(context, state),
-                          _buildSkipButton(context),
                         ],
                       ),
                     ),
@@ -188,23 +186,6 @@ class _BiometricAuthScreenState extends State<BiometricAuthScreen>
     }
 
     return const SizedBox.shrink();
-  }
-
-  // TODO: Remove before production
-  Widget _buildSkipButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 32),
-      child: TextButton(
-        onPressed: () {
-          sl<SessionManager>().startSession();
-          context.go(AppConstants.homeRoute);
-        },
-        child: Text(
-          'Skip for now (Debug)',
-          style: TextStyle(color: Colors.grey.shade500, fontSize: 13),
-        ),
-      ),
-    );
   }
 
   void _showDeviceCompromisedDialog(BuildContext context, String reason) {
